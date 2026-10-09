@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oscilloscope Function Tracer</title>
+    <style>
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        canvas {
+            background: #000;
+            border-radius: 8px;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="oscCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('oscCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            // Set drawing buffer dimensions to match the window
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        const time_per_trace = 500.0;
+        const num_traces = 10;
+        const trace_offset = 100;
+        const trace_step = 25;
+
+        const opacity_min = 0.5;
+        const opacity_max = 1.0;
+        const opacity_tau = 2.0;
+
+        // Define your mathematical function here
+        function f(x) {
+            return x * x * x / 3;
+        }
+
+        function screenX(t) {
+            return canvas.width * (t / time_per_trace) * (t / time_per_trace)
+        }
+
+        function screenY(t) {
+            return canvas.height * (t / time_per_trace)
+        }
+
+        function animate(timestamp) {
+            // Clear the screen
+            ctx.fillStyle = 'rgba(0, 0, 0, 1.0)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Trace styling
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 12;
+
+            let current_time = timestamp % (time_per_trace * num_traces);
+            let current_trace = Math.floor(timestamp / time_per_trace) % num_traces;
+
+            ctx.strokeStyle = `rgba(128, 128, 128, 1.0)`;
+            ctx.shadowColor = `rgba(128, 128, 128, 1.0)`;
+
+            // Render the function from xMin up to the current animated progress point
+            for (let trace = 0; trace <= num_traces; trace += 1) {
+                ctx.beginPath();
+                ctx.moveTo(screenX(0), screenY(0));
+                for (let t = 0.0; t <= time_per_trace; t += trace_step) {
+                    ctx.lineTo(screenX(t), screenY(t) + canvas.height / num_traces * trace);
+                }
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(screenX(current_time % time_per_trace), screenY(current_time % time_per_trace) + canvas.height / num_traces * current_trace, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            requestAnimationFrame(animate);
+        }
+
+        // Adjust canvas dimensions whenever screen layout updates
+        window.addEventListener('resize', resizeCanvas);
+
+        // Run initially on page load
+        resizeCanvas();
+
+        // Start animation loop
+        animate();
+    </script>
+</body>
+
+</html>

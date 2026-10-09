@@ -1,17 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dendritic Industries</title>
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       background: #000;
       color: #fff;
-      font-family: 'Courier New', Courier, monospace;
+      font-family: 'Bahnschrift', 'DIN DIN', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 400;
+      /* Supports variable weights from 200 to 900 */
+      font-style: normal;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -28,10 +36,14 @@
       letter-spacing: 0.12em;
       text-align: right;
       line-height: 1.6;
-      opacity: 0.75;
+      /* opacity: 0.75; */
     }
 
-    .contact {
+    .tagline img {
+      height: 5rem;
+    }
+
+    .slogan {
       font-size: 1.2rem;
       letter-spacing: 0.05em;
     }
@@ -39,8 +51,7 @@
     .location {
       position: absolute;
       bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 1rem;
       font-size: 0.85rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -48,9 +59,22 @@
     }
   </style>
 </head>
+
 <body>
-  <div class="tagline">The future of American manufacturing is coming.</div>
-  <p class="contact">Contact us at contact@dendritic.industries</p>
-  <div class="location">Pittsburgh, Pennsylvania, USA</div>
+  <div class="topbar">
+    <div class="tagline"><img src="dendritic_logo_inverted.png" alt="Dendritic Industries Logo"></div>
+    <div class="navbar">
+      
+    </div>
+  </div>
+
+  <div class="slogan">The hardest parts — from the ground up</div>
+
+  <div class="location">
+    <div>Dendritic Industries, Inc.</div>
+    <div>7371 Thomas Boulevard</div>
+    <div>Pittsburgh, Pennsylvania, USA</div>
+  </div>
 </body>
+
 </html>
