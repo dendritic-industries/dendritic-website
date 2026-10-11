@@ -100,14 +100,6 @@
       offscreenCanvas.height = window.innerHeight;
     }
 
-    const time_per_trace = 250.0;
-    const y_levels = Array.from({ length: 10 }, (_, index) => 0.05 + index * 0.1)
-    const num_traces = y_levels.length;
-    const total_trace_time = time_per_trace * num_traces;
-    const pause = 100.0;
-    const total_time = total_trace_time + pause;
-    const trace_step = 1.0;
-
     // Avrami parameters
     const n = 0.67;
     const lnA = Math.log(1.14e8);
@@ -115,14 +107,19 @@
     const R = 8.314;
 
     // Plot ranges
+    const y_levels = Array.from({ length: 10 }, (_, index) => 0.05 + index * 0.1)
     const T_max = 1300 - 1;
     const T_min = 900;
     const log_t_max = 7;
     const log_t_min = 2;
     const log_conv = 1 / Math.log(10);
 
+    // Plotting resolution
+    const num_traces = y_levels.length;
+    const steps_per_trace = 500;
+
     function T(t) {
-      return T_max - (T_max - T_min) * t / time_per_trace
+      return T_max - (T_max - T_min) * t / steps_per_trace
     }
 
     function log_t(T, y_prime) {
@@ -134,7 +131,7 @@
     }
 
     function screenY(t) {
-      return canvas.height * t / time_per_trace
+      return canvas.height * t / steps_per_trace
     }
 
     function draw_grid() {
@@ -172,11 +169,12 @@
       }
     }
 
-    function animate(timestamp) {
-      // Clear the screen
-      ctx.fillStyle = 'rgba(0, 0, 0, 1.0)';
+    function draw_ttt() {
+      // Clear the screen to black
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Draw semi-log grid (X-axis: log_10(t), Y-axis: T)
       draw_grid();
 
       // Trace styling
@@ -194,7 +192,7 @@
 
         ctx.beginPath();
         ctx.moveTo(screenX(0), screenY(0));
-        for (let t = 0.0; t <= time_per_trace; t += trace_step) {
+        for (let t = 0.0; t <= steps_per_trace; t += 1) {
           ctx.lineTo(screenX(t, y_prime), screenY(t));
         }
         ctx.stroke();
@@ -208,7 +206,7 @@
     resizeCanvas();
 
     // Draw initial frame
-    animate();
+    draw_ttt();
 
     // --- GLSL ES 3.0 SHADERS ---
     const vsSource = `#version 300 es
@@ -233,6 +231,7 @@ uniform vec2 u_mouse;
 uniform float u_time;
 uniform float u_radius;
 uniform float u_displacement;
+uniform float u_peak_mag;
 
 // GLSL 2D Simplex Noise
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
@@ -264,12 +263,8 @@ void main() {
   vec2 pixelPos = v_uv * u_resolution;
   float dist = distance(pixelPos, u_mouse);
 
-  // Cosine Falloff Curve
-  // float factor = 0.0;
-  // if (dist < u_radius) {
-  //   factor = 0.5 * (1.0 + cos((dist / u_radius) * 3.14159265));
-  // }
-  float factor = 1.0;
+  // Gaussian Falloff Curve with 0.5 baseline
+  float factor = 1.0 + u_peak_mag * exp(-0.5 * (dist * dist) / u_radius / u_radius);
 
   // --- EDGE DAMPENING (Prevents sampling past borders) ---
   // Calculates distance to the nearest canvas edge in UV space [0.0 to 1.0]
@@ -327,7 +322,8 @@ void main() {
       mouse: gl.getUniformLocation(program, 'u_mouse'),
       time: gl.getUniformLocation(program, 'u_time'),
       radius: gl.getUniformLocation(program, 'u_radius'),
-      displacement: gl.getUniformLocation(program, 'u_displacement')
+      displacement: gl.getUniformLocation(program, 'u_displacement'),
+      peak_mag: gl.getUniformLocation(program, 'u_peak_mag'),
     };
 
     // Texture Initialization
@@ -338,26 +334,73 @@ void main() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 
     // Render Call inside Loop
-    function renderWebGL2(sourceCanvas, mouseX, mouseY, time) {
+    function render_distortion(sourceCanvas, pos_x, pos_y, magnitude, time) {
       // Update Texture from offscreen canvas/image
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
 
       gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-      gl.uniform2f(uniforms.mouse, mouseX, canvas.height - mouseY); // Bottom-left GL origin
+      gl.uniform2f(uniforms.mouse, pos_x, pos_y); // Bottom-left GL origin
       gl.uniform1f(uniforms.time, time);
-      gl.uniform1f(uniforms.radius, 200.0);
-      gl.uniform1f(uniforms.displacement, 3.0);
+      gl.uniform1f(uniforms.radius, canvas.width / 10);
+      gl.uniform1f(uniforms.displacement, 2.0);
+      gl.uniform1f(uniforms.peak_mag, magnitude);
 
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
-    function render(timestamp) {
-      renderWebGL2(offscreenCanvas, canvas.width / 2, canvas.height / 2, timestamp / 1000);
-      requestAnimationFrame(render);
+    // Mouse 2nd order "physics" state variables
+    let mouseX = canvas.width / 2;
+    let mouseY = canvas.height / 2;
+    let px = canvas.width / 2;
+    let py = canvas.height / 2;
+    let vx = 0.0;
+    let vy = 0.0;
+
+    // 2nd order dynamics constants
+    const omega_n = 2 * 2 * 3.14;
+    const zeta = 1.0;
+    const m = 1.0;
+    const k = omega_n ^ 2 * m;
+    const c = zeta * 2 * Math.sqrt(k * m);
+
+    // Timestamp
+    let lastTime = performance.now() / 1000.0;
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+
+      // X, Y relative to the canvas canvas boundary
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+    });
+
+    function render_frame(timestamp) {
+      // Convert from milliseconds to seconds
+      let now = timestamp / 1000.0;
+      let dt = now - lastTime;
+
+      // Calculate acceleration
+      let ax = (k * (mouseX - px) - c * vx) / m;
+      let ay = (k * (mouseY - py) - c * vy) / m;
+
+      // Euler integration for now
+      vx = vx + ax * dt;
+      vy = vy + ay * dt;
+      px = px + vx * dt;
+      py = py + vy * dt;
+
+      // console.log(`${px} ${py} ${vx} ${vy}`);
+
+      lastTime = now;
+
+      let v_mag = Math.sqrt(vx * vx + vy * vy)
+      render_distortion(offscreenCanvas, px, py, Math.min(v_mag / Math.sqrt(canvas.width), 9.0), now);
+      requestAnimationFrame(render_frame);
     }
 
-    requestAnimationFrame(render);
+    // Start animation loop
+    requestAnimationFrame(render_frame);
   </script>
 
   <div class="topbar">
