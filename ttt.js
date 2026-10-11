@@ -6,7 +6,7 @@ const offscreen_grid_canvas = document.createElement('canvas');
 const offscreen_grid_ctx = offscreen_grid_canvas.getContext('2d');
 
 const grid_canvas = document.getElementById('grid_canvas');
-const gl = grid_canvas.getContext('webgl2');
+const gl = grid_canvas.getContext('webgl2', { antialias: true });
 
 function resizeCanvas() {
     // Set drawing buffer dimensions to match the window
@@ -262,43 +262,64 @@ function createShader(gl, type, src) {
     return shader;
 }
 
-const program = gl.createProgram();
-gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
-gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
-gl.linkProgram(program);
-gl.useProgram(program);
+// Keep references globally scoped so they can be re-initialized
+let program, positionBuffer, vao, uniforms, texture;
 
-// Full screen quad geometry
-const positionBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    -1, -1, 1, -1, -1, 1,
-    -1, 1, 1, -1, 1, 1
-]), gl.STATIC_DRAW);
+function initWebGL() {
+    // --- SETUP SHADER PROGRAM & QUAD BUFFER ---
+    program = gl.createProgram();
+    gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
+    gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
+    gl.linkProgram(program);
+    gl.useProgram(program);
 
-// VAO (Vertex Array Object - Standard in WebGL 2)
-const vao = gl.createVertexArray();
-gl.bindVertexArray(vao);
-const posLoc = gl.getAttribLocation(program, 'a_position');
-gl.enableVertexAttribArray(posLoc);
-gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+    // Full screen quad geometry
+    positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1, 1, -1, -1, 1,
+        -1, 1, 1, -1, 1, 1
+    ]), gl.STATIC_DRAW);
 
-// Get Uniform Locations
-const uniforms = {
-    resolution: gl.getUniformLocation(program, 'u_resolution'),
-    mouse: gl.getUniformLocation(program, 'u_mouse'),
-    time: gl.getUniformLocation(program, 'u_time'),
-    radius: gl.getUniformLocation(program, 'u_radius'),
-    displacement: gl.getUniformLocation(program, 'u_displacement'),
-    peak_mag: gl.getUniformLocation(program, 'u_peak_mag'),
-};
+    // VAO (Vertex Array Object)
+    vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const posLoc = gl.getAttribLocation(program, 'a_position');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
-// Texture Initialization
-const texture = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, texture);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // Get Uniform Locations
+    uniforms = {
+        resolution: gl.getUniformLocation(program, 'u_resolution'),
+        mouse: gl.getUniformLocation(program, 'u_mouse'),
+        time: gl.getUniformLocation(program, 'u_time'),
+        radius: gl.getUniformLocation(program, 'u_radius'),
+        displacement: gl.getUniformLocation(program, 'u_displacement'),
+        peak_mag: gl.getUniformLocation(program, 'u_peak_mag'),
+    };
+
+    // Texture Initialization
+    texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+}
+
+// --- CONTEXT LOSS & RESTORE HANDLING ---
+grid_canvas.addEventListener('webglcontextlost', (e) => {
+    // Prevent default so the browser knows you intend to recover the context
+    e.preventDefault();
+}, false);
+
+grid_canvas.addEventListener('webglcontextrestored', () => {
+    // Rebuild all GPU resources from scratch
+    initWebGL();
+}, false);
+
+// Run initial WebGL setup
+initWebGL();
 
 // Render Call inside Loop
 function render_distortion(sourceCanvas, pos_x, pos_y, magnitude, time) {
