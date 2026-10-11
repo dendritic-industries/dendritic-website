@@ -1,56 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dendritic Industries</title>
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      background: #000;
-      color: #fff;
-      font-family: 'Courier New', Courier, monospace;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .tagline {
-      position: absolute;
-      top: 2rem;
-      left: 2.5rem;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      text-align: right;
-      line-height: 1.6;
-      opacity: 0.75;
-    }
-
-    .contact {
-      font-size: 1.2rem;
-      letter-spacing: 0.05em;
-    }
-
-    .location {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.85rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      opacity: 0.75;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <div class="tagline">The future of American manufacturing is coming.</div>
-  <p class="contact">Contact us at contact@dendritic.industries</p>
-  <div class="location">Pittsburgh, Pennsylvania, USA</div>
+  <!-- Fancy TTT diagram animation -->
+  <canvas id="grid_canvas" style="z-index: -100"></canvas>
+  <canvas id="ttt_canvas" style="z-index: 0"></canvas>
+  <script type="text/javascript" src="ttt.js"></script>
+
+  <div class="topbar">
+    <div class="logo"><a href="index.html"><img src="dendritic_logo_inverted_transparent.svg"
+          alt="Dendritic Industries Logo"></a></div>
+    <div class="navbar">
+      <!-- <div><a>About</a></div>
+      <div><a>Blog</a></div>
+      <div><a>Research</a></div>
+      <div><a>Careers</a></div> -->
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="slogan">Pushing the frontiers of manufacturing</div>
+  </div>
+
+  <div class="block">
+    <div class="column">
+      <h1>Massive Metal Manufacturing</h1>
+      <p>
+        We are team of engineers building the next generation of large-scale hybrid manufacturing, with a simple goal:
+        make a 10-ton component by just uploading a file and clicking "Run".
+        The road to achieve this will <i>not</i> be simple, but even today we can fundamentally change how parts are
+        made at this scale.
+      </p>
+
+      <h1>Unleashing Heavy Industry</h1>
+      <p>
+        While CNC machining and powder-based additive have revolutionized manufacturing at the smaller scale, the
+        largest and most critical parts for heavy industry are still made via the same casting and forging techniques
+        employed over a century ago. Lead times are long, properties vary, design freedom is limited.
+      </p>
+      <p>
+        We can change that, slashing lead times from months to days, enabling direct control of properties, and freeing
+        engineers to use optimal geometries.
+      </p>
+
+      <h1>From the Ground Up</h1>
+      <p>
+        Our manufacturing stack is designed in-house and vertically integrated, from motion control to metallurgical
+        planning.
+        We believe this gives us the maximum freedom to build what is needed, instead of just building around what has
+        come before.
+      </p>
+      <p>
+        Rooted in our fundamental metallurgical, process control, and optimization research, we bring the benefits of
+        the
+        bleeding edge to our customers.
+      </p>
+
+      <h1 style="text-align: center; padding-top: 10vh;">Need something big made?</h1>
+      <h1 style="text-align: center; padding-top: 1vh;">Let's talk:</h1>
+      <h1 style="text-align: center; padding-top: 1vh;">
+        <a href="mailto:contact@dendritic.industries">contact@dendritic.industries</a>
+      </h1>
+    </div>
+  </div>
+
+  <div class="bottombar">
+    <div class="location">
+      <div>Dendritic Industries, Inc.</div>
+      <div>7371 Thomas Boulevard</div>
+      <div>Pittsburgh, Pennsylvania</div>
+      <div>United States of America</div>
+    </div>
+
+    <div class="links">
+      <div><a href="https://www.linkedin.com/company/dendritic-industries/">LinkedIn</a></div>
+      <!-- <div><a href="https://github.com/dendritic-industries">GitHub</a></div> -->
+      <!-- <div><a>X</a></div> -->
+      <!-- <div><a>YouTube</a></div> -->
+    </div>
+  </div>
+
 </body>
+
 </html>
