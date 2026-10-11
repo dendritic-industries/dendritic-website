@@ -116,7 +116,6 @@ function draw_ttt(px, py, brightness) {
     let log_t = px / active_canvas.width * (log_t_max - log_t_min) + log_t_min;
 
     let y_prime_var = y_prime(T, log_t);
-    console.log(y_prime_var);
 
     // Render traces, scanning over temperature to compute log(t) for given y level
     let rgb = 255 * brightness;
@@ -164,6 +163,10 @@ active_canvas.addEventListener('mousemove', (e) => {
     mouseY = e.clientY - rect.top;
 });
 
+function clamp(value, min, max) {
+    return Math.max(Math.min(value, max), min);
+}
+
 function softClamp(value, min, max, smoothness = 1) {
     const center = (min + max) / 2;
     const range = (max - min) / 2;
@@ -173,7 +176,6 @@ function softClamp(value, min, max, smoothness = 1) {
 
     return center + range * Math.tanh(normalized);
 }
-
 
 // --- GLSL ES 3.0 SHADERS ---
 const vsSource = `#version 300 es
@@ -349,8 +351,8 @@ function render_frame(timestamp) {
     // Euler integration for now
     vx = vx + ax * dt;
     vy = vy + ay * dt;
-    px = px + vx * dt;
-    py = py + vy * dt;
+    px = clamp(px + vx * dt, 0, active_canvas.width);
+    py = clamp(py + vy * dt, 0, active_canvas.height);
 
     lastTime = now;
 
