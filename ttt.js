@@ -187,7 +187,7 @@ function render_frame(timestamp) {
 
     let v_mag = Math.sqrt(vx * vx + vy * vy)
     let brightness_raw = v_mag / (active_canvas.width / 10);
-    let brightness = softClamp(brightness_raw, 0.4, 1.0, 2)
+    let brightness = softClamp(brightness_raw, 0.75, 1.0, 2)
     draw_ttt(px, py, brightness);
     requestAnimationFrame(render_frame);
 }
