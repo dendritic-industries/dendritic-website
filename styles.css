@@ -1,0 +1,138 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    color: #fff;
+
+    font-family: 'Bahnschrift', 'DIN DIN', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 12pt;
+
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+}
+
+/* Link styling */
+a {
+    color: #ffffff;
+    text-decoration: none;
+    position: relative;
+}
+
+/* Animated underline */
+a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background-color: #ffffff;
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.25s ease-out;
+}
+
+a:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+.tagline {
+    position: absolute;
+    top: 2rem;
+    left: 2.5rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-align: right;
+    line-height: 1.6;
+}
+
+.tagline img {
+    height: 5rem;
+}
+
+.slogan {
+    position: absolute;
+    top: 50vh;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    text-shadow:
+        2px 2px 3px #000,
+        -2px 2px 3px #000,
+        2px -2px 3px #000,
+        -2px -2px 3px #000;
+}
+
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10vh;
+    background-image: linear-gradient(#000000ff, #00000000);
+}
+
+.block {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.block .column {
+    padding-top: 10vh;
+    width: 90%;
+    max-width: 8.5in;
+    text-align: justify;
+}
+
+.column h1 {
+    padding-top: 2rem;
+}
+
+.column h1 {
+    padding-top: 1rem;
+}
+
+.column p {
+    padding-top: 0.5rem;
+}
+
+.bottombar {
+    width: 100%;
+    display: flex;
+    align-items: normal;
+}
+
+.location {
+    padding: 1rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    /* opacity: 0.75; */
+}
+
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
